@@ -1,2 +1,2 @@
 # c4-search
-Systematic Connect 4 performance comparison of MCTS and heuristic Minimax search.
+Systematic performance comparison of MCTS and heuristic Minimax search in Connect 4.
