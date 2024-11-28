@@ -29,7 +29,7 @@ def run_simulation(id: int,
     if os.path.exists(file_name):
         df = pd.read_parquet(file_name)
     else:
-        df = pd.DataFrame(columns=["sim_id", "move_id", "ms", "agent_curr", "agent_start", "n_nodes", 
+        df = pd.DataFrame(columns=["sim_id", "move_id", "ms", "agent_curr", "agent_start", "mcts_strategy", "n_nodes",
                                    "n_pruned", "is_win", "depth", "budget_total", "budget_consumed", "budget_left", "budget_exceeded"])
 
     p1 = Minimax(budget=budget, depth=mm_depth) if is_mm_p1 else \
@@ -60,8 +60,7 @@ def run_simulation(id: int,
             start_time = time.time()
             move = curr_agent.pick_move(state)
             end_time = time.time()
-        except Exception as e:
-            print(e)
+        except Exception as _:
             end_time = time.time()
             budget_exceeded = True
             move = None
@@ -84,7 +83,7 @@ def run_simulation(id: int,
             in_place = {"n_nodes": 0, "n_pruned": 0}
 
         if not budget_exceeded:
-            state.make_move(move)
+            state.make_move(move)   
             is_win = state.winner != 0
 
         # record data for current move
@@ -94,6 +93,7 @@ def run_simulation(id: int,
             "ms": [(end_time - start_time) * 1000],  # s to ms
             "agent_curr": [curr_agent_name],
             "agent_start": [start_agent],
+            "mcts_strategy": [mcts_strat],
             "n_nodes": [in_place["n_nodes"]],
             "n_pruned": [in_place["n_pruned"]],
             "is_win": [is_win if not budget_exceeded else False],
@@ -120,12 +120,12 @@ def run_all_simulations(repeats: int):
     os.makedirs("bin", exist_ok=True)  
 
     budgets = [100, 500, 1000, 10000]
-    strats = ["safe", "optimistic", "greedy"]
+    strats = ["thrifty", "optimistic", "greedy"]
     depths = [1, 2, 3, 4, 5]
     is_mm_p1_options = [True, False]
     
     total_simulations = len(budgets) * len(strats) * len(depths) * len(is_mm_p1_options) * repeats
-    print(f"Running {total_simulations} simulations...")
+    print(f"Preparing to run {total_simulations} simulations...")
 
     sim_count = 0
     with tqdm(total=total_simulations, desc="Running simulations") as pbar:

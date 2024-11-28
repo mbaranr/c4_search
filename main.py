@@ -5,7 +5,7 @@ from search.minimax import Minimax
 from c4.state import C4State
 from c4.visual import C4Visual
 
-def play(initial_state: C4State, budget, window: C4Visual=None, delay: float=.0):
+def play_demo(initial_state: C4State, budget, is_mm_p1: bool, window: C4Visual=None, delay: float=.5):
     state = initial_state
     minimax = Minimax(budget, 2)
     mcts = MCTS_UCT(budget, strategy="greedy", spaces=state.rows*state.cols)
@@ -21,7 +21,6 @@ def play(initial_state: C4State, budget, window: C4Visual=None, delay: float=.0)
         # p1: red
         else:
             move = mcts.pick_move(state)
-            # move = random.choice(state.get_possible_moves())
         
         state.make_move(move)
         

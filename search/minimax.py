@@ -28,16 +28,9 @@ class Minimax:
                             beta=float('inf'),
                             is_maximizing=True if state.last_player == 1 else False)
         except Exception as _:
-            return self.fallback_mode()
+            return self.fallback_mode(rootstate)
         
-        move = self.rootnode.best_move()["move"]
-
-        # if move >= 0 and move <= state.cols and self.board[0][move] == 0:
-        #     print(move)
-
-        # assert move >= 0 and move <= state.cols and self.board[0][move] == 0
-
-        return move
+        return self.rootnode.best_move()["move"]
 
     def alpha_beta(self, 
                    node: NodeMinimax,
@@ -109,17 +102,26 @@ class Minimax:
 
         return best_util
     
-    def fallback_mode(self):
+    def fallback_mode(self, state: C4State):
         """
         Function called once the computational budget is exhausted (AKA: no more evaluations left).
         Reuses the search tree from previous move.
-        Can be called 'depth' times before search tree is exhausted. 
+        Called 'depth' times before search tree is exhausted. 
         """
         # if no more search tree left, forfeit the game
         if len(self.prev_rootnode.children) == 0:
             raise BudgetExceededError("Minimax ran out of computational budget!")
         
-        best_dict = self.prev_rootnode.best_move()
-        self.rootnode = best_dict["node"]
+        possible_moves = state.get_possible_moves()
+        sorted_children = sorted(self.prev_rootnode.children, lambda c: c.util, reverse=True)
 
-        return best_dict["move"]
+        for child in sorted_children:
+            if child.move not in possible_moves:
+                continue
+            self.rootnode = child
+            return child.move
+
+        # no possible moves left
+        # unreacheable
+        raise BudgetExceededError("Minimax ran out of computational budget!")
+        

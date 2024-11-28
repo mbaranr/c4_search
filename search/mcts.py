@@ -32,7 +32,7 @@ class MCTS_UCT:
             # scale proportions 
             self.budget_alloc = [int(budget * (x / total_scale)) for x in budget_alloc]
             self.budget_alloc[-1] += budget - sum(self.budget_alloc)  # correct rounding errors
-        elif strategy == "safe":
+        elif strategy == "thrifty":
             self.budget_alloc = [budget//max_moves]*max_moves
 
     def pick_move(self, rootstate: C4State):
@@ -65,7 +65,7 @@ class MCTS_UCT:
             self.rollout(state)
             self.backpropagation(child, state)
 
-        return self.action_selection(self.rootnode)
+        return self.rootnode.best_move()["move"]
 
     def ucb1(self, 
              node: NodeMCTS, 
@@ -99,10 +99,6 @@ class MCTS_UCT:
         if node is not None:
             node.update(int(state.winner == node.last_player))
             self.backpropagation(node.parent, state)
-
-    def action_selection(self, node: NodeMCTS):
-        return sorted(node.children, key=lambda c: c.wins / c.visits)[-1].move
-    
 
 
 

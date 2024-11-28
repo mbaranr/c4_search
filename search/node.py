@@ -15,6 +15,9 @@ class Node:
         self.parent = parent  # None if root node
         self.children = []
 
+    def best_move(self):
+        raise NotImplementedError("The method 'best_move' must be implemented in a subclass.")
+
     def add_child(self, move):
         raise NotImplementedError("The method 'add_child' must be implemented in a subclass.")
 
@@ -54,6 +57,10 @@ class NodeMCTS(Node):
         self.visits += 1
         self.wins += result
 
+    def best_move(self):
+        child = sorted(self.children, key=lambda c: c.wins / c.visits)[-1]
+        return {"move": child.move, "node": child}
+
     def add_child(self, move, state):
         """
         Adds a new child node of type NodeMinimax to this node.
@@ -81,7 +88,7 @@ class NodeMinimax(Node):
         self.util = result
 
     def best_move(self):
-        child = max(self.children, key=lambda child: child.util)
+        child = sorted(self.children, key=lambda c: c.util)[-1]
         return {"move": child.move, "node": child} 
 
     def add_child(self, move):
