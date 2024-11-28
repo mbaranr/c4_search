@@ -1,64 +1,109 @@
 import random
 from math import sqrt, log
-from search.node import Node
-from game.state import C4State
+from search.node import NodeMCTS
+from c4.state import C4State
+from search.util import BudgetExceededError
 
 # implementation taken from James Stovold's lab material
 
-def ucb1(node: Node, child: Node, exploration_factor=sqrt(2)):
-    return child.wins / child.visits + exploration_factor * sqrt(log(node.visits) / child.visits)
+class MCTS_UCT:
 
-def mcts_uct(rootstate: C4State, 
-             itermax: int, 
-             exploration_factor: float=sqrt(2)
+    def __init__(self, 
+                 budget: int, 
+                 strategy: str,
+                 spaces: int,
+                 exploration_factor: float=sqrt(2)
+                 ):
+        self.budget = budget
+        self.exploration_factor = exploration_factor
+        self.rootnode = None
+        self.turn_count = 0
+
+        max_moves = spaces//2
+
+        # budget allocations for each move
+        if strategy == "greedy":
+            self.budget_alloc = [budget // (max_moves // 2) if i < max_moves // 2 else 0 for i in range(max_moves)]
+        elif strategy == "optimistic":
+            scale = 0.9  # 90% of the previous allocation
+            # decreasing itermax proportions
+            budget_alloc = [scale**i for i in range(max_moves)]
+            total_scale = sum(budget_alloc)  
+            # scale proportions 
+            self.budget_alloc = [int(budget * (x / total_scale)) for x in budget_alloc]
+            self.budget_alloc[-1] += budget - sum(self.budget_alloc)  # correct rounding errors
+        elif strategy == "safe":
+            self.budget_alloc = [budget//max_moves]*max_moves
+
+    def pick_move(self, rootstate: C4State):
+        """
+        Conducts a game tree search using the MCTS-UCT algorithm.
+        Assumes that 2 players are alternating.
+
+        Paramters:
+        rootstate (C4State): The game state for which an action must be selected (where search begins).
+        
+        Returns:
+        (int): Action that will be taken by an agent (column of C4 grid).
+        """
+        self.rootnode = NodeMCTS(state=rootstate)
+        
+        itermax = self.budget_alloc[self.turn_count]
+        self.budget -= itermax
+        self.turn_count += 1
+
+        if itermax == 0:
+            raise BudgetExceededError("MCTS ran out of computational budget!")
+        
+        for _ in range(itermax):
+            
+            state = rootstate.copy()
+            
+            node = self.selection(self.rootnode, state)
+            child = self.expansion(node, state)
+            
+            self.rollout(state)
+            self.backpropagation(child, state)
+
+        return self.action_selection(self.rootnode)
+
+    def ucb1(self, 
+             node: NodeMCTS, 
+             child: NodeMCTS, 
              ):
-    """
-    Conducts a game tree search using the MCTS-UCT algorithm.
-    Assumes that 2 players are alternating.
-
-    Paramters:
-    rootstate (C4State): The game state for which an action must be selected (where search begins).
-    itermax (int): Number of MCTS iterations to be carried out. Also knwon as the computational budget.
+        return child.wins / child.visits + self.exploration_factor * sqrt(log(node.visits) / child.visits)
     
-    Returns:
-    (int): Action that will be taken by an agent (column of C4 grid).
-    """
-    rootnode = Node(state=rootstate)
+    def selection(self, 
+                  node: NodeMCTS, 
+                  state: C4State, 
+                  ):
+        if not node.is_fully_expanded() or node.children == []:
+            return node
+        selected_node = sorted(node.children, key=lambda child: self.ucb1(node, child))[-1]
+        state.make_move(selected_node.move)
+        return self.selection(selected_node, state)
+
+    def expansion(self, node: NodeMCTS, state: C4State):
+        child = node
+        if node.untried_moves != []:  # if we can expand (i.e. state/node is non-terminal)
+            move = random.choice(node.untried_moves)
+            state.make_move(move)
+            child = node.add_child(move, state)
+        return child
+
+    def rollout(self, state: C4State):
+        while state.get_possible_moves() != []:
+            state.make_move(random.choice(state.get_possible_moves()))
+
+    def backpropagation(self, node: NodeMCTS, state: C4State):
+        if node is not None:
+            node.update(int(state.winner == node.last_player))
+            self.backpropagation(node.parent, state)
+
+    def action_selection(self, node: NodeMCTS):
+        return sorted(node.children, key=lambda c: c.wins / c.visits)[-1].move
     
-    for _ in range(itermax):
-        node  = rootnode
-        state = rootstate.copy()
-        
-        node = selection(node, state, selection_policy=ucb1, selection_policy_args=[exploration_factor])
-        node = expansion(node, state)
-        
-        rollout(state)
-        backpropagation(node, state)
 
-    return action_selection(rootnode)
 
-def selection(node: Node, state: C4State, selection_policy=ucb1, selection_policy_args=[]):
-    if not node.is_fully_expanded() or node.children == []:
-        return node
-    selected_node = sorted(node.children, key=lambda child: selection_policy(node, child, *selection_policy_args))[-1]
-    state.make_move(selected_node.move)
-    return selection(selected_node, state)
 
-def expansion(node: Node, state: C4State):
-    if node.untried_moves != []:  # if we can expand (i.e. state/node is non-terminal)
-        move = random.choice(node.untried_moves)
-        state.make_move(move)
-        node = node.add_child(move, state)
-    return node
 
-def rollout(state: C4State):
-    while state.get_possible_moves() != []:
-        state.make_move(random.choice(state.get_possible_moves()))
-
-def backpropagation(node: Node, state: C4State):
-    if node is not None:
-        node.update(int(state.winner == node.last_turn))
-        backpropagation(node.parent, state)
-
-def action_selection(node: Node):
-    return sorted(node.children, key=lambda c: c.wins / c.visits)[-1].move

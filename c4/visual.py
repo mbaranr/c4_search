@@ -1,5 +1,5 @@
 import pygame
-from game.state import C4State
+from c4.state import C4State
 
 class C4Visual:
     """

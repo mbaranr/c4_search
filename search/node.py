@@ -1,6 +1,28 @@
-from game.state import C4State
+from c4.state import C4State
 
 class Node:
+    """ 
+    Implementation inspired from James Stovold's lab material.
+
+    Generic game tree node implementation. A tree is a connected acyclic graph.
+    """
+
+    def __init__(self, 
+                 move: int=None, 
+                 parent=None, 
+                 ):
+        self.move = move  # move taken to reach this game state 
+        self.parent = parent  # None if root node
+        self.children = []
+
+    def add_child(self, move):
+        raise NotImplementedError("The method 'add_child' must be implemented in a subclass.")
+
+    def update(self, result):
+        raise NotImplementedError("The method 'update' must be implemented in a subclass.")
+
+
+class NodeMCTS(Node):
     """ 
     Implementation taken from James Stovold's lab material.
 
@@ -13,34 +35,15 @@ class Node:
                  parent=None, 
                  state: C4State=None
                  ):
-        self.move = move  # move taken to reach this game state 
-        self.parent = parent  # None if root node
-        self.children = []
-        
+        super().__init__(move, parent)
         self.wins = 0
         self.visits = 0
+        self.last_player = state.last_player  # 1 or 2 (to check which player won)
         self.untried_moves = state.get_possible_moves()  # future children
-        self.last_turn = state.last_turn  # 1 or 2 (to check which player won)
-        
+
     def is_fully_expanded(self):
         return self.untried_moves == []
-
-    def add_child(self, move, state):
-        """
-        Adds a new child node to this node. 
-
-        Paremeters:
-        move (int): action taken by the player.
-        state (C4State): state corresponding to new child node.
-        
-        Returns:
-        child (Node): Newly created child.
-        """
-        child = Node(move=move, parent=self, state=state)
-        self.untried_moves.remove(move)
-        self.children.append(child)
-        return child
-
+    
     def update(self, result):
         """
         Updates node statistics with the result from last rollout.
@@ -50,3 +53,42 @@ class Node:
         """
         self.visits += 1
         self.wins += result
+
+    def add_child(self, move, state):
+        """
+        Adds a new child node of type NodeMinimax to this node.
+        """
+        child = NodeMCTS(move=move, parent=self, state=state)
+        self.untried_moves.remove(move)
+        self.children.append(child)
+        return child
+
+class NodeMinimax(Node):
+    """ 
+    Minimax node.
+    """
+
+    def __init__(self, 
+                 move: int=None, 
+                 parent=None, 
+                 util: float=None,
+                 ):
+        super().__init__(move, parent)
+        self.pruned = False
+        self.util = util    
+
+    def update(self, result):
+        self.util = result
+
+    def best_move(self):
+        child = max(self.children, key=lambda child: child.util)
+        return {"move": child.move, "node": child} 
+
+    def add_child(self, move):
+        """
+        Adds a new child node of type NodeMinimax to this node.
+        """
+        child = NodeMinimax(move=move, parent=self)
+        self.children.append(child)
+        return child
+
