@@ -155,6 +155,7 @@ class C4State(object):
                 within_bounds(start_row-dx, start_col-dy, bool_conv.shape[0], bool_conv.shape[1]) and bool_conv[start_row-dx][start_col-dy]:
                 is_pure = False
             
+            # if it does, ignore it
             if not is_pure:
                 continue
 

@@ -1,2 +1,10 @@
 # Connect 4: MCTS vs Minimax
-Systematic performance comparison of MCTS and heuristic Minimax search in Connect 4.
+Empirical comparison of MCTS and Minimax Search for the game Connect 4.
+
+## Run
+
+```
+cd c4-search
+pip install -r requirements.txt
+python3 main.py
+```

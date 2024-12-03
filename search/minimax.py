@@ -7,11 +7,13 @@ class Minimax:
     def __init__(self, 
                  budget: int, 
                  depth: int, 
+                 max_player: int
                  ):
         self.depth = depth
         self.budget = budget    # max number of game state evaluations
         self.rootnode = NodeMinimax()
         self.prev_rootnode = self.rootnode
+        self.max_player = max_player
 
     def pick_move(self, rootstate: C4State):
         
@@ -26,8 +28,8 @@ class Minimax:
                             self.depth,
                             alpha=float('-inf'),
                             beta=float('inf'),
-                            is_maximizing=True if state.last_player == 1 else False)
-        except Exception as _:
+                            is_maximizing=False if state.last_player == self.max_player else True)
+        except BudgetExceededError:
             return self.fallback_mode(rootstate)
         
         return self.rootnode.best_move()["move"]
@@ -54,11 +56,9 @@ class Minimax:
             best_util = float('inf')
 
         if depth == 0 or state.winner != 0: # terminal state or maximum depth
-            util = evaluation_function(state)
+            util = evaluation_function(state, self.max_player)
             node.update(util)
             return util
-
-        local_best_move = None  # track best move for this parent
 
         for move in state.get_possible_moves():
                 
@@ -75,10 +75,8 @@ class Minimax:
                 is_maximizing=not is_maximizing
             )
 
-            # updating best utility and move
-            if cmp_fn(best_util, util) != best_util:
-                best_util = util
-                local_best_move = move
+            # updating best utility
+            best_util = cmp_fn(best_util, util)
             
             # undoing move
             state.undo_move(move)
@@ -91,14 +89,10 @@ class Minimax:
 
             # pruning
             if beta <= alpha:
-                node.update(best_util)
                 node.pruned = True
                 break
 
         node.update(best_util)
-
-        if depth == self.depth:
-            self.best_move_tracker = local_best_move
 
         return best_util
     
@@ -113,7 +107,7 @@ class Minimax:
             raise BudgetExceededError("Minimax ran out of computational budget!")
         
         possible_moves = state.get_possible_moves()
-        sorted_children = sorted(self.prev_rootnode.children, lambda c: c.util, reverse=True)
+        sorted_children = sorted(self.prev_rootnode.children, key=lambda c: c.util, reverse=True)
 
         for child in sorted_children:
             if child.move not in possible_moves:

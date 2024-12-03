@@ -88,8 +88,16 @@ class NodeMinimax(Node):
         self.util = result
 
     def best_move(self):
-        child = sorted(self.children, key=lambda c: c.util)[-1]
-        return {"move": child.move, "node": child} 
+        # excluding pruned children
+        valid_children = [child for child in self.children if not child.pruned]
+
+        if not valid_children:
+            # if every child was pruned, loss is inevitable
+            arbitrary_child = self.children[-1]     # pick arbitrary move
+            return {"move": arbitrary_child.move, "node": arbitrary_child}
+        
+        best_child = sorted(valid_children, key=lambda c: c.util)[-1]
+        return {"move": best_child.move, "node": best_child}
 
     def add_child(self, move):
         """
@@ -98,4 +106,14 @@ class NodeMinimax(Node):
         child = NodeMinimax(move=move, parent=self)
         self.children.append(child)
         return child
+    
+    def print_tree(self, level=0):
+        """
+        Recursively prints the tree structure.
+        """
+        indent = "  " * level
+        pruned_status = "(Pruned)" if self.pruned else ""
+        print(f"{indent}- Move: {self.move}, Util: {self.util} {pruned_status}")
+        for child in self.children:
+            child.print_tree(level + 1)
 

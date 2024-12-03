@@ -1,3 +1,6 @@
 scipy
 pyarrow
 pandas
+seaborn
+matplotlib
+pygame

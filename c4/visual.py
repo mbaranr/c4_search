@@ -9,12 +9,14 @@ class C4Visual:
     def __init__(self, 
                  state: C4State,
                  cell_rad: float=50,
-                 margin: float=20
+                 margin: float=20,
+                 empty_color=(0,0,0)
                  ):
         
         self.state = state
         self.cell_rad = cell_rad
         self.margin = margin
+        self.empty_color = empty_color
 
         # board dimensions
         self.cols = self.state.cols
@@ -46,9 +48,16 @@ class C4Visual:
                 elif self.state.board[row][col] == 2:
                     pygame.draw.circle(self.screen, (255, 255, 0), (x, y), self.cell_rad)   # p2: yellow
                 else:
-                    pygame.draw.circle(self.screen, (0, 0, 0), (x, y), self.cell_rad)     # empty: white
+                    pygame.draw.circle(self.screen, self.empty_color, (x, y), self.cell_rad)     # empty: white
     
         pygame.display.update()
+
+    def save_screenshot(self, filename):
+        """
+        Captures the current game state as a screenshot and saves it as a PNG file.
+        """
+        pygame.image.save(self.screen, filename)
+        print(f"Screenshot saved as {filename}")
 
     def wait_for_quit(self):
         """
@@ -56,7 +65,7 @@ class C4Visual:
         """
         running = True
         while running:
-            for event in pygame.event.get():
+            for event in pygame.event.get():    
                 if event.type == pygame.QUIT:
                     running = False
         pygame.quit()

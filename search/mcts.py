@@ -99,7 +99,3 @@ class MCTS_UCT:
         if node is not None:
             node.update(int(state.winner == node.last_player))
             self.backpropagation(node.parent, state)
-
-
-
-
