@@ -33,6 +33,6 @@ $ python3 main.py
 
 ## Credits
 
-* [m4mbo](https://github.com/m4mbo) - Code, paper.
+* [m4mbo](https://github.com/m4mbo) - Code, report.
 
 
