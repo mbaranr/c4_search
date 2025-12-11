@@ -1,6 +1,6 @@
 # Connect 4: MCTS vs Minimax
 
-Empirical comparison of MCTS and Minimax Search for Connect 4. For more information, see (distill post)[https://mbaranr.github.io/blog/2024/c4_search/].
+Empirical comparison of MCTS and Minimax Search for Connect 4. For more information, see [distill post](https://mbaranr.github.io/blog/2024/c4_search/).
 
 ## Run
 
