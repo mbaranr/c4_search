@@ -5,13 +5,9 @@ Empirical comparison of MCTS and Minimax Search for Connect 4. For more informat
 ## Run
 
 ```
-$ cd c4-search
+$ cd c4_search
 $ pip install -r requirements.txt
 $ python3 main.py
 ```
-
-## Credits
-
-* [mbaranr](https://github.com/mbaranr) - Code, report.
 
 
