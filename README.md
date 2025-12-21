@@ -1,6 +1,6 @@
 # Monte Carlo Tree Search and Minimax Search for Connect 4
 
-Empirical comparison of Monte Carlo Tree Search (MCTS) and Minimax Search for the solved, perfect-information Connect X. For more information, see [distill post](https://mbaranr.github.io/blog/2024/c4_search/).
+Code for empirical comparison of Monte Carlo Tree Search and Minimax for solved, perfect-information Connect 4. See [distill post](https://mbaranr.github.io/blog/2024/c4_search/).
 
 ## Run
 
